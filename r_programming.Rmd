@@ -1,0 +1,65 @@
+---
+title: "Project_assignment_4"
+author: "Vineet agarwal"
+date: "29/10/2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+d <- getwd()
+```
+the set `r d`
+
+```{r mean_total_Steps}
+library(dplyr)
+library(ggplot2)
+
+read_data <- read.csv("activity.csv")
+total_steps <- aggregate(read_data$steps~read_data$date,FUN=sum,na.rm= TRUE)
+par( mfrow= c(2,1))
+barplot(total_steps$`read_data$steps` ~ total_steps$`read_data$date`, col = "red")
+hist(total_steps$`read_data$steps`, col = "red")
+mean_steps <- mean(total_steps$`read_data$steps`)
+median_steps <- median(total_steps$`read_data$steps`)
+```
+the mean of the step count per day is `r mean_steps` and the median is `r median_steps`
+the minute interval plot asked in the second assignment is 
+```{r interval_wise_summation,echo=FALSE}
+Good_rows <- complete.cases(read_data$steps)
+new_xtract_Dataset <- read_data[Good_rows,]
+grouped <- group_by(new_xtract_Dataset,interval)
+summ_mean <- summarise(grouped, netmean = mean(steps))
+par(mfcol =c(1,1))
+plot(summ_mean$interval,summ_mean$netmean,type = "l")
+answer <- summ_mean$interval[which.max(summ_mean$netmean)]
+```
+the maximum mean of the steps is found in the `r answer`
+``` {r missingvalues,echo=FALSE}
+
+missing_values <- nrow(filter(read_data, is.na(read_data$steps)==TRUE))
+nrow(filter(read_data, is.na(read_data$steps)==TRUE))
+indexes <- which(is.na(read_data$steps)== TRUE)
+for(i in 1:length(indexes)) {read_data[indexes[i],]$steps <- summ_mean[which(summ_mean$interval==read_data[indexes[i],]$interval),]$netmean}
+```
+the missing data has been imputed with mean of every interval, 
+```{r sum , echo= FALSE}
+
+total_steps_impute <- aggregate(read_data$steps~read_data$date,FUN=sum,na.rm= TRUE)
+median_steps_impute <- aggregate(read_data$steps~read_data$date,FUN=median,na.rm= TRUE)
+par(mfcol= c(2,2),mar=c(5,5,5,5))
+hist(total_steps_impute$`read_data$steps`)
+hist(median_steps_impute$`read_data$steps`)
+hist(total_steps$`read_data$steps`)
+```
+the new graph according to the new imputed data averaged across weekdays, in intervals of 5 minutes is 
+```{r code_to_plot_assign4 }
+library(lubridate)
+read_data$date <- ymd(read_data$date)
+read_data$weekdays <- weekdays(read_data$date)
+read_data$weekend <- ifelse(read_data$weekdays %in% c("Monday","Tuesday","Wednesday","Thursday","Friday"),"Weekday","Weekend")
+new_Data_assign4 <- aggregate(read_data$steps~read_data$weekend+read_data$interval,FUN = mean)
+ggplot(new_Data_assign4, aes(new_Data_assign4$`read_data$interval`,new_Data_assign4$`read_data$steps`))+ facet_grid(new_Data_assign4$`read_data$weekend`~.) + geom_line()
+```
+
